@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+ - docker
+
+before_install:
+  - docker build -t scaredcat/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run scaredcat/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t scaredcat/multi-client ./client
+  - docker build -t scaredcat/multi-nginx ./nginx
+  - docker build -t scaredcat/multi-server ./server
+  - docker build -t scaredcat/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push scaredcat/multi-client
+  - docker push scaredcat/multi-nginx
+  - docker push scaredcat/multi-server
+  - docker push scaredcat/multi-worker
